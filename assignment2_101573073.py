@@ -44,6 +44,25 @@ common_ports = {
 # - @target.setter with empty string validation
 # - Destructor: prints "NetworkTool instance destroyed"
 
+class NetworkTool:
+
+    def __init__(self, target):
+        self.__target = target
+
+    @property
+    def target(self):
+        return self.__target
+
+    @target.setter
+    def target(self, value):
+        if value == "":
+            print("Error: Target cannot be empty")
+        else:
+            self.__target = value
+
+    def __del__(self):
+        print("NetworkTool instance destroyed")
+
 
 # Q3: What is the benefit of using @property and @target.setter?
 # TODO: Your 2-4 sentence answer here... (Part 2, Q3)
