@@ -99,6 +99,42 @@ class NetworkTool:
 #     - Start all threads (one loop)
 #     - Join all threads (separate loop)
 
+class PortScanner(NetworkTool):
+    def __init__(self, target):
+        super().__init__(target)
+        self.scan_results = []
+        self.lock = threading.Lock()
+
+    def __del__(self):
+        print("PortScanner instance destroyed")
+        super().__del__()
+    def scan_port(self, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.settimeout(1)
+            result = sock.connect_ex((self.target, port))
+            status = "Open" if result == 0 else "Closed"
+            service_name = common_ports.get(port, "Unknown")
+            self.lock.acquire()
+            self.scan_results.append((port, status, service_name))
+            self.lock.release()
+        except socket.error as e:
+            print(f"Error scanning port {port}: {e}")
+        finally:
+            sock.close()
+    def get_open_ports(self):
+        return [r for r in self.scan_results if r[1] == "Open"]
+
+    def scan_range(self, start_port, end_port):
+        threads = []
+        for port in range(start_port, end_port + 1):
+            t = threading.Thread(target=self.scan_port, args=(port,))
+            threads.append(t)
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
 
 # TODO: Create save_results(target, results) function (Step vii)
 # - Connect to scan_history.db
@@ -106,6 +142,29 @@ class NetworkTool:
 # - INSERT each result with datetime.datetime.now()
 # - Commit, close
 # - Wrap in try-except for sqlite3.Error
+
+def save_results(target, results):
+    try:
+        conn = sqlite3.connect("scan_history.db")
+        cursor = conn.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS scans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            target TEXT,
+            port INTEGER,
+            status TEXT,
+            service TEXT,
+            scan_date TEXT
+        )""")
+        for result in results:
+            port, status, service = result
+            cursor.execute(
+                "INSERT INTO scans (target, port, status, service, scan_date) VALUES (?, ?, ?, ?, ?)",
+                (target, port, status, service, str(datetime.datetime.now()))
+            )
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
 
 
 # TODO: Create load_past_scans() function (Step viii)
@@ -115,18 +174,54 @@ class NetworkTool:
 # - Handle missing table/db: print "No past scans found."
 # - Close connection
 
+def load_past_scans():
+    try:
+        conn = sqlite3.connect("scan_history.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM scans")
+        rows = cursor.fetchall()
+        for row in rows:
+            row_id, target, port, status, service, scan_date = row
+            print(f"[{scan_date}] {target} : Port {port} ({service}) - {status}")
+        conn.close()
+    except sqlite3.Error:
+        print("No past scans found.")
+
 
 # ============================================================
 # MAIN PROGRAM
 # ============================================================
 if __name__ == "__main__":
-    pass
     # TODO: Get user input with try-except (Step ix)
     # - Target IP (default "127.0.0.1" if empty)
     # - Start port (1-1024)
     # - End port (1-1024, >= start port)
     # - Catch ValueError: "Invalid input. Please enter a valid integer."
     # - Range check: "Port must be between 1 and 1024."
+
+    target_input = input("Enter target IP address (press Enter for 127.0.0.1): ").strip()
+    target = target_input if target_input else "127.0.0.1"
+    start_port = None
+    while start_port is None:
+        try:
+            start_port = int(input("Enter starting port (1-1024): "))
+            if not (1 <= start_port <= 1024):
+                print("Port must be between 1 and 1024.")
+                start_port = None
+        except ValueError:
+            print("Invalid input. Please enter a valid integer.")
+    end_port = None
+    while end_port is None:
+        try:
+            end_port = int(input("Enter ending port (1-1024): "))
+            if not (1 <= end_port <= 1024):
+                print("Port must be between 1 and 1024.")
+                end_port = None
+            elif end_port < start_port:
+                print(f"End port must be >= start port ({start_port}).")
+                end_port = None
+        except ValueError:
+            print("Invalid input. Please enter a valid integer.")
 
     # TODO: After valid input (Step x)
     # - Create PortScanner object
@@ -138,6 +233,19 @@ if __name__ == "__main__":
     # - Ask "Would you like to see past scan history? (yes/no): "
     # - If "yes", call load_past_scans()
 
+    scanner = PortScanner(target)
+    print(f"Scanning {target} from port {start_port} to {end_port}...")
+    scanner.scan_range(start_port, end_port)
+    open_ports = scanner.get_open_ports()
+    print(f"\n--- Scan Results for {target} ---")
+    for port, status, service in open_ports:
+        print(f"Port {port}: {status} ({service})")
+    print("------")
+    print(f"Total open ports found: {len(open_ports)}")
+    save_results(target, open_ports)
+    answer = input("\nWould you like to see past scan history? (yes/no): ").strip().lower()
+    if answer == "yes":
+        load_past_scans()
 
 # Q5: New Feature Proposal
 # TODO: Your 2-3 sentence description here... (Part 2, Q5)
