@@ -1,19 +1,42 @@
 """
-Author: <YOUR REAL FIRST AND LAST NAME>
+Author: Renan Almeida Gutierrez
+Student ID: 101573073
 Assignment: #2
 Description: Port Scanner — A tool that scans a target machine for open network ports
 """
 
 # TODO: Import the required modules (Step ii)
 # socket, threading, sqlite3, os, platform, datetime
-
+import socket
+import threading
+import sqlite3
+import os
+import platform
+import datetime
 
 # TODO: Print Python version and OS name (Step iii)
+print("Python Version:", platform.python_version())
+print("Operating System:", os.name)
 
 
 # TODO: Create the common_ports dictionary (Step iv)
 # Add a 1-line comment above it explaining what it stores
 
+# Maps common port numbers to their associated service names
+common_ports = {
+    21: "FTP",
+    22: "SSH",
+    23: "Telnet",
+    25: "SMTP",
+    53: "DNS",
+    80: "HTTP",
+    110: "POP3",
+    143: "IMAP",
+    443: "HTTPS",
+    3306: "MySQL",
+    3389: "RDP",
+    8080: "HTTP-Alt"
+}
 
 # TODO: Create the NetworkTool parent class (Step v)
 # - Constructor: takes target, stores as private self.__target
