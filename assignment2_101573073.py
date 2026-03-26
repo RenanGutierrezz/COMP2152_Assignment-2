@@ -49,6 +49,8 @@ class NetworkTool:
     def __init__(self, target):
         self.__target = target
 
+    # Q3: What is the benefit of using @property and @target.setter?
+    # The property and setter give us control over how the target is read or changed without making it fully public. If we used the private variable directly, nothing would stop someone from setting it to an empty string or anything else invalid. This way the setter can catch bad values before they get stored.
     @property
     def target(self):
         return self.__target
@@ -64,10 +66,6 @@ class NetworkTool:
         print("NetworkTool instance destroyed")
 
 
-# Q3: What is the benefit of using @property and @target.setter?
-# The property and setter give us control over how the target is read or changed without making it fully public. If we used the private variable directly, nothing would stop someone from setting it to an empty string or anything else invalid. This way the setter can catch bad values before they get stored.
-
-
 # Q1: How does PortScanner reuse code from NetworkTool?
 # PortScanner inherits from NetworkTool so it automatically gets the target property and setter without rewriting them. For example, self.target in scan_port works even though its never defined in PortScanner itself, it comes from the parent class. Calling super().__init__(target) in the constructor means the parent takes care of storing the target.
 
@@ -75,10 +73,6 @@ class NetworkTool:
 # - Constructor: call super().__init__(target), initialize self.scan_results = [], self.lock = threading.Lock()
 # - Destructor: print "PortScanner instance destroyed", call super().__del__()
 # - scan_port(self, port):
-
-#Q4: What would happen without try-except here?
-# Without try-except, if the machine is offline or the connection gets refused, a socket error would crash the thread running scan_port. Since each port scan runs in its own thread the crash would be silent and that port just wouldnt show up in the results. The finally block is there to make sure the socket closes no matter what happens.
-#
 #     - try-except with socket operations
 #     - Create socket, set timeout, connect_ex
 #     - Determine Open/Closed status
@@ -89,9 +83,6 @@ class NetworkTool:
 #
 # - get_open_ports(self):
 #     - Use list comprehension to return only "Open" results
-#
-# Q2: Why do we use threading instead of scanning one port at a time?
-# Threading lets all the port scans run at the same time instead of one after another. Without it, scanning 1024 ports with a 1 second timeout could take over 17 minutes to finish. With threads the whole scan takes about as long as scanning just one single port.
 #
 # - scan_range(self, start_port, end_port):
 #     - Create threads list
@@ -110,6 +101,8 @@ class PortScanner(NetworkTool):
         super().__del__()
     def scan_port(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Q4: What would happen without try-except here?
+        # Without try-except, if the machine is offline or the connection gets refused, a socket error would crash the thread running scan_port. Since each port scan runs in its own thread the crash would be silent and that port just wouldnt show up in the results. The finally block is there to make sure the socket closes no matter what happens.
         try:
             sock.settimeout(1)
             result = sock.connect_ex((self.target, port))
@@ -125,6 +118,8 @@ class PortScanner(NetworkTool):
     def get_open_ports(self):
         return [r for r in self.scan_results if r[1] == "Open"]
 
+    # Q2: Why do we use threading instead of scanning one port at a time?
+    # Threading lets all the port scans run at the same time instead of one after another. Without it, scanning 1024 ports with a 1 second timeout could take over 17 minutes to finish. With threads the whole scan takes about as long as scanning just one single port.
     def scan_range(self, start_port, end_port):
         threads = []
         for port in range(start_port, end_port + 1):
