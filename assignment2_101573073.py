@@ -243,5 +243,5 @@ if __name__ == "__main__":
         load_past_scans()
 
 # Q5: New Feature Proposal
-# A Port Risk Classifier would go through the open ports and use a nested if statement to give each one a risk level. Ports like 21, 22, 23, and 3389 would be HIGH risk since they get attacked a lot, ports like 25, 110, 143, and 3306 would be MEDIUM, and anything else would be LOW. At the end it would print each port with its service name and risk level.
+# A Scan Export to CSV feature would ask the user after the scan if they want to export the results to a file. It uses a list comprehension to build the rows from the open ports list before writing them to results.csv with the port, service, and status. This makes it easy to save and share scan results outside of the terminal.
 # Diagram: See diagram_101573073.png in the repository root
