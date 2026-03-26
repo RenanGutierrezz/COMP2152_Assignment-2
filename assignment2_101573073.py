@@ -50,7 +50,10 @@ class NetworkTool:
         self.__target = target
 
     # Q3: What is the benefit of using @property and @target.setter?
-    # The property and setter give us control over how the target is read or changed without making it fully public. If we used the private variable directly, nothing would stop someone from setting it to an empty string or anything else invalid. This way the setter can catch bad values before they get stored.
+    # The property and setter give us control over how the target is read or changed
+    # without making it fully public. If we used the private variable directly, nothing
+    # would stop someone from setting it to an empty string or anything else invalid.
+    # This way the setter can catch bad values before they get stored.
     @property
     def target(self):
         return self.__target
@@ -67,7 +70,10 @@ class NetworkTool:
 
 
 # Q1: How does PortScanner reuse code from NetworkTool?
-# PortScanner inherits from NetworkTool so it automatically gets the target property and setter without rewriting them. For example, self.target in scan_port works even though its never defined in PortScanner itself, it comes from the parent class. Calling super().__init__(target) in the constructor means the parent takes care of storing the target.
+# PortScanner inherits from NetworkTool so it automatically gets the target property
+# and setter without rewriting them. For example, self.target in scan_port works even
+# though its never defined in PortScanner itself, it comes from the parent class.
+# Calling super().__init__(target) in the constructor means the parent takes care of storing the target.
 
 # TODO: Create the PortScanner child class that inherits from NetworkTool (Step vi)
 # - Constructor: call super().__init__(target), initialize self.scan_results = [], self.lock = threading.Lock()
@@ -102,7 +108,10 @@ class PortScanner(NetworkTool):
     def scan_port(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Q4: What would happen without try-except here?
-        # Without try-except, if the machine is offline or the connection gets refused, a socket error would crash the thread running scan_port. Since each port scan runs in its own thread the crash would be silent and that port just wouldnt show up in the results. The finally block is there to make sure the socket closes no matter what happens.
+        # Without try-except, if the machine is offline or the connection gets refused,
+        # a socket error would crash the thread running scan_port. Since each port scan
+        # runs in its own thread the crash would be silent and that port just wouldnt
+        # show up in the results. The finally block makes sure the socket closes no matter what happens.
         try:
             sock.settimeout(1)
             result = sock.connect_ex((self.target, port))
@@ -119,7 +128,9 @@ class PortScanner(NetworkTool):
         return [r for r in self.scan_results if r[1] == "Open"]
 
     # Q2: Why do we use threading instead of scanning one port at a time?
-    # Threading lets all the port scans run at the same time instead of one after another. Without it, scanning 1024 ports with a 1 second timeout could take over 17 minutes to finish. With threads the whole scan takes about as long as scanning just one single port.
+    # Threading lets all the port scans run at the same time instead of one after another.
+    # Without it, scanning 1024 ports with a 1 second timeout could take over 17 minutes to finish.
+    # With threads the whole scan takes about as long as scanning just one single port.
     def scan_range(self, start_port, end_port):
         threads = []
         for port in range(start_port, end_port + 1):
@@ -243,5 +254,8 @@ if __name__ == "__main__":
         load_past_scans()
 
 # Q5: New Feature Proposal
-# A Scan Export to CSV feature would ask the user after the scan if they want to export the results to a file. It uses a list comprehension to build the rows from the open ports list before writing them to results.csv with the port, service, and status. This makes it easy to save and share scan results outside of the terminal.
+# A Scan Export to CSV feature would ask the user after the scan if they want to
+# export the results to a file. It uses a list comprehension to build the rows from
+# the open ports list before writing them to results.csv with the port, service, and status.
+# This makes it easy to save and share scan results outside of the terminal.
 # Diagram: See diagram_101573073.png in the repository root
