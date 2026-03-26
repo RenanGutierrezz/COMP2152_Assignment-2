@@ -65,19 +65,19 @@ class NetworkTool:
 
 
 # Q3: What is the benefit of using @property and @target.setter?
-# TODO: Your 2-4 sentence answer here... (Part 2, Q3)
+# The property and setter give us control over how the target is read or changed without making it fully public. If we used the private variable directly, nothing would stop someone from setting it to an empty string or anything else invalid. This way the setter can catch bad values before they get stored.
 
 
 # Q1: How does PortScanner reuse code from NetworkTool?
-# TODO: Your 2-4 sentence answer here... (Part 2, Q1)
+# PortScanner inherits from NetworkTool so it automatically gets the target property and setter without rewriting them. For example, self.target in scan_port works even though its never defined in PortScanner itself, it comes from the parent class. Calling super().__init__(target) in the constructor means the parent takes care of storing the target.
 
 # TODO: Create the PortScanner child class that inherits from NetworkTool (Step vi)
 # - Constructor: call super().__init__(target), initialize self.scan_results = [], self.lock = threading.Lock()
 # - Destructor: print "PortScanner instance destroyed", call super().__del__()
-#
 # - scan_port(self, port):
-#     Q4: What would happen without try-except here?
-#     TODO: Your 2-4 sentence answer here... (Part 2, Q4)
+
+#Q4: What would happen without try-except here?
+# Without try-except, if the machine is offline or the connection gets refused, a socket error would crash the thread running scan_port. Since each port scan runs in its own thread the crash would be silent and that port just wouldnt show up in the results. The finally block is there to make sure the socket closes no matter what happens.
 #
 #     - try-except with socket operations
 #     - Create socket, set timeout, connect_ex
@@ -90,8 +90,8 @@ class NetworkTool:
 # - get_open_ports(self):
 #     - Use list comprehension to return only "Open" results
 #
-#     Q2: Why do we use threading instead of scanning one port at a time?
-#     TODO: Your 2-4 sentence answer here... (Part 2, Q2)
+# Q2: Why do we use threading instead of scanning one port at a time?
+# Threading lets all the port scans run at the same time instead of one after another. Without it, scanning 1024 ports with a 1 second timeout could take over 17 minutes to finish. With threads the whole scan takes about as long as scanning just one single port.
 #
 # - scan_range(self, start_port, end_port):
 #     - Create threads list
@@ -243,10 +243,10 @@ if __name__ == "__main__":
     print("------")
     print(f"Total open ports found: {len(open_ports)}")
     save_results(target, open_ports)
-    answer = input("\nWould you like to see past scan history? (yes/no): ").strip().lower()
+    answer = input("\nWould you like to see scan history? (yes/no): ").strip().lower()
     if answer == "yes":
         load_past_scans()
 
 # Q5: New Feature Proposal
-# TODO: Your 2-3 sentence description here... (Part 2, Q5)
-# Diagram: See diagram_studentID.png in the repository root
+# A Port Risk Classifier would go through the open ports and use a nested if statement to give each one a risk level. Ports like 21, 22, 23, and 3389 would be HIGH risk since they get attacked a lot, ports like 25, 110, 143, and 3306 would be MEDIUM, and anything else would be LOW. At the end it would print each port with its service name and risk level.
+# Diagram: See diagram_101573073.png in the repository root
